@@ -11,7 +11,7 @@ public class Mapeamentos {
 	protected int missCache;
 	protected int hitCache;
 	private TiposMapeamento tipoMapeamento;
-
+	private ArrayList<String> arquivoTestes;
 
 
 	public String getInfo() {
@@ -23,7 +23,12 @@ public class Mapeamentos {
 		return "Número de Acessos: " + x + '\n' + "MissCache: " + y + '\n' + "HitCache: " + z  + '\n' + "HitRate: " + a + " %";
 }
 
-	public Mapeamentos(ConfigCache configCache) {
+	public Mapeamentos(String arquivoConfiguracao, String arquivoDados, TiposMapeamento tipoMapeamento) {
+
+		ConfigCache configCache = new ConfigCache(arquivoConfiguracao);
+		arquivoTestes = FileManager.stringReader(arquivoDados);
+		this.tipoMapeamento = tipoMapeamento;
+
 		this.tamanhoMemoria = configCache.getTamPrincipal();
 		this.tamanhoCache = configCache.getTamCache();
 		this.palavra = configCache.getPalavra();
@@ -35,8 +40,8 @@ public class Mapeamentos {
 		direto();
 	}
 
-	public void executarAssociacao(MetodosSubstituicao metodosSubstituicao){
-			switch(this.tipoMapeamento){
+	public void executar(MetodosSubstituicao metodosSubstituicao){
+			switch(this.tipoMapeamento){				
 				case ASSOCIATIVO:	
 					Associativo(metodosSubstituicao);			
 					break;
@@ -46,14 +51,6 @@ public class Mapeamentos {
 				default:
 					break;
 		}
-	}
-
-	public TiposMapeamento getTipoMapeamento() {
-		return tipoMapeamento;
-	}
-
-	public void setTipoMapeamento(TiposMapeamento tipoMapeamento) {
-		this.tipoMapeamento = tipoMapeamento;
 	}
 
 	private void direto() {
@@ -72,9 +69,8 @@ public class Mapeamentos {
 		count = 0;
 		missCache = 0;
 		hitCache = 0; 
-
-		ArrayList<String> teste = FileManager.stringReader("D:/CACHE_FINAL/CACHE_FINAL/data/teste_3D.txt");
-		for (String linha : teste) {
+		
+		for (String linha : arquivoTestes) {
 			long acesso = Long.parseLong(linha);
 
 			endereco = (tag + palavraEmBits + linhaEmBits);
@@ -106,27 +102,7 @@ public class Mapeamentos {
 		mostrarInformacoes(count, hitCache, missCache);
 	}
 
-	private int chamarSubstituicao(MetodosSubstituicao metodosSubstituicao, ValoresAssociativo[] posicoes, String valorTag, int hitCache, int nLinhas, int id, ValoresAssociativo end){
-		switch(metodosSubstituicao){
-			case ALEATORIO:
-				hitCache = Aleatorio.Substituir(posicoes, valorTag, hitCache, nLinhas);
-				break;
-			case FIFO:
-				hitCache = FIFO.Substituir(posicoes, valorTag, hitCache, id);
-				break;
-			case LFU:
-				hitCache = LFU.Substituir(posicoes, valorTag, end, hitCache);
-				break;
-			case LRU:
-				hitCache = LRU.Substituir(posicoes, valorTag, hitCache);
-				break;
-			default:
-				break;
-		}
-		return hitCache;
-	}
-
-	public void Associativo(MetodosSubstituicao opcao) {
+	private void Associativo(MetodosSubstituicao opcao) {
 		int tag = (int) (Math.log(tamanhoMemoria / palavra) / Math.log(2)) - 2;
 
 		ValoresAssociativo[] posicoes = new ValoresAssociativo[(int) nLinhas];
@@ -137,8 +113,7 @@ public class Mapeamentos {
 		hitCache = 0;
 		missCache = 0;
 
-		ArrayList<String> teste = FileManager.stringReader("D:/CACHE_FINAL/CACHE_FINAL/data/teste_3D.txt");
-		for (String linha : teste) {
+		for (String linha : arquivoTestes) {
 			long acesso = Integer.parseInt(linha);
 
 			endereco = tag + 2;
@@ -152,16 +127,33 @@ public class Mapeamentos {
 			if (i < nLinhas) {
 				posicoes[i] = end;
 			} else {
-				if (opcao == MetodosSubstituicao.LRU) {
-					hitCache = LRU.Substituir(posicoes, valorTag, hitCache);
-				} else if (opcao == MetodosSubstituicao.FIFO) {
-					hitCache = FIFO.Substituir(posicoes, valorTag, hitCache, id);
-					id++;
-				} else if (opcao == MetodosSubstituicao.LFU) {
-					hitCache = LFU.Substituir(posicoes, valorTag, end, hitCache);
-				} else if (opcao == MetodosSubstituicao.ALEATORIO) {
-					hitCache = Aleatorio.Substituir(posicoes, valorTag, hitCache, nLinhas);
+				switch (opcao) {
+					case LRU:
+						hitCache = LRU.Substituir(posicoes, valorTag, hitCache);
+						break;
+					case FIFO:
+						hitCache = FIFO.Substituir(posicoes, valorTag, hitCache, id);
+						id++;
+						break;
+					case LFU:
+						hitCache = LFU.Substituir(posicoes, valorTag, end, hitCache);
+						break;
+					case ALEATORIO:
+						hitCache = Aleatorio.Substituir(posicoes, valorTag, hitCache, nLinhas);
+						break;				
+					default:
+						break;
 				}
+				// if (opcao == MetodosSubstituicao.LRU) {
+				// 	hitCache = LRU.Substituir(posicoes, valorTag, hitCache);
+				// } else if (opcao == MetodosSubstituicao.FIFO) {
+				// 	hitCache = FIFO.Substituir(posicoes, valorTag, hitCache, id);
+				// 	id++;
+				// } else if (opcao == MetodosSubstituicao.LFU) {
+				// 	hitCache = LFU.Substituir(posicoes, valorTag, end, hitCache);
+				// } else if (opcao == MetodosSubstituicao.ALEATORIO) {
+				// 	hitCache = Aleatorio.Substituir(posicoes, valorTag, hitCache, nLinhas);
+				// }
 			}
 			count++;
 			i++;
@@ -170,7 +162,7 @@ public class Mapeamentos {
 		mostrarInformacoes(count, hitCache, missCache);
 	}
 
-	public void AssociativoConjunto(MetodosSubstituicao opcao) {
+	private void AssociativoConjunto(MetodosSubstituicao opcao) {
 		long endereco = 0;
 		int i = 0, j = 0, nBloco = 0, blocos = 1, tag = 0, logBlocos = 0, valor = 0, id = 0;
 		count = 0;
@@ -185,8 +177,7 @@ public class Mapeamentos {
 		String valorTag;
 		String valorBloco;
 
-		ArrayList<String> teste = FileManager.stringReader("D:/SimuladorCacheOAC/SimuladorCache_AlexandreRodrigues/data/teste_1.txt");
-		for (String linha : teste) {
+		for (String linha : arquivoTestes) {
 			long acesso = Integer.parseInt(linha);
 
 			endereco = tag + logBlocos + 2;
@@ -207,16 +198,34 @@ public class Mapeamentos {
 				}
 			}
 			if (i != 0) {
-				if (opcao == MetodosSubstituicao.LRU) {
-					hitCache = LRU.Substituir(posicoes[nBloco], valorTag, hitCache);
-				} else if (opcao == MetodosSubstituicao.FIFO) {
-					hitCache = FIFO.Substituir(posicoes[nBloco], valorTag, hitCache, id);
-					id++;
-				} else if (opcao == MetodosSubstituicao.LFU) {
-					hitCache = LFU.Substituir(posicoes[nBloco], valorTag, end, hitCache);
-				} else if (opcao == MetodosSubstituicao.ALEATORIO) {
+				switch (opcao) {
+					case LRU:
+						hitCache = LRU.Substituir(posicoes[nBloco], valorTag, hitCache);
+						break;
+					case FIFO:
+						hitCache = FIFO.Substituir(posicoes[nBloco], valorTag, hitCache, id);
+						id++;
+						break;
+					case LFU:
+						hitCache = LFU.Substituir(posicoes[nBloco], valorTag, end, hitCache);
+						break;
+					case ALEATORIO:
 					hitCache = Aleatorio.Substituir(posicoes[nBloco], valorTag, hitCache, tamanhoCache);
+						break;				
+					default:
+						break;
 				}
+
+				// if (opcao == MetodosSubstituicao.LRU) {
+				// 	hitCache = LRU.Substituir(posicoes[nBloco], valorTag, hitCache);
+				// } else if (opcao == MetodosSubstituicao.FIFO) {
+				// 	hitCache = FIFO.Substituir(posicoes[nBloco], valorTag, hitCache, id);
+				// 	id++;
+				// } else if (opcao == MetodosSubstituicao.LFU) {
+				// 	hitCache = LFU.Substituir(posicoes[nBloco], valorTag, end, hitCache);
+				// } else if (opcao == MetodosSubstituicao.ALEATORIO) {
+				// 	hitCache = Aleatorio.Substituir(posicoes[nBloco], valorTag, hitCache, tamanhoCache);
+				// }
 			}
 
 			count++;

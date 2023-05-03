@@ -1,7 +1,7 @@
 public enum TiposMapeamento {
-      DIRETO("Mapeamento Direto"),
-      ASSOCIATIVO("Mapeamento Associativo"),
-      ASSOCIATIVO_CONJUNTO("Mapeamento Associativo Conjunto");
+      DIRETO("Direto"),
+      ASSOCIATIVO("Associativo"),
+      ASSOCIATIVO_CONJUNTO("Associativo Conjunto");
 
       private String descricao;
 

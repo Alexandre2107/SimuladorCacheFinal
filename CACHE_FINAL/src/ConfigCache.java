@@ -7,11 +7,8 @@ public class ConfigCache {
   private long tamCache;
   private long linha;
 
-  private int[] dadosArquivo = new int[4];
-
   public ConfigCache(String caminhoArquivo) {
     parseArquivo(caminhoArquivo);
-
   }
   
   private void parseArquivo(String caminhoArquivo){
@@ -100,5 +97,4 @@ public class ConfigCache {
   public void setLinha(long linha) {
     this.linha = linha;
   }
-
 }
