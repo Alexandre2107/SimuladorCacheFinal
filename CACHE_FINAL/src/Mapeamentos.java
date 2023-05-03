@@ -2,10 +2,10 @@
 import java.util.ArrayList;
 
 public class Mapeamentos {
-	protected int tamanhoCache;
-	protected int tamanhoMemoria;
-	protected int palavra;
-	protected int nLinhas;
+	protected long tamanhoCache;
+	protected long tamanhoMemoria;
+	protected long palavra;
+	protected long nLinhas;
 	protected int logLinha;
 	protected int count;
 	protected int missCache;
@@ -28,7 +28,7 @@ public class Mapeamentos {
 		this.tamanhoCache = configCache.getTamCache();
 		this.palavra = configCache.getPalavra();
 		this.nLinhas = configCache.getLinha();
-		this.logLinha = (int) (Math.log(nLinhas) / Math.log(2));
+		// this.logLinha = (int) (Math.log(nLinhas) / Math.log(2));
 	}
 
 	public void executar(){
@@ -58,40 +58,47 @@ public class Mapeamentos {
 
 	private void direto() {
 		// Calculo de quantos bits a tag tem
-		int tag = (int) ((Math.log(tamanhoMemoria / palavra) / Math.log(2)) + 1 - logLinha - 2);
+		Long enderecoEmbits =  (long) ((Math.log(tamanhoMemoria / palavra) / Math.log(2)));
+		Long linhaEmBits = (long) (Math.log(nLinhas) / Math.log(2));
+		Long palavraEmBits = (long) (Math.log(palavra)/Math.log(2));
 
-		String[] posicoes = new String[nLinhas];
+		Long tag = enderecoEmbits - palavraEmBits  - linhaEmBits;
+
+		String[] posicoes = new String[(int) nLinhas];
 		String valorTag;
 		String valorLinha;
-		int endereco = 0;
-		int lCache;
+		long endereco = 0;
+		Long lCache;
 		count = 0;
 		missCache = 0;
 		hitCache = 0; 
 
-		ArrayList<String> teste = FileManager.stringReader("D:/SimuladorCacheOAC/SimuladorCache_AlexandreRodrigues/data/teste_2.txt");
+		ArrayList<String> teste = FileManager.stringReader("D:/CACHE_FINAL/CACHE_FINAL/data/teste_3D.txt");
 		for (String linha : teste) {
-			int acesso = Integer.parseInt(linha);
+			long acesso = Long.parseLong(linha);
 
-			endereco = tag + logLinha + 2;
+			endereco = (tag + palavraEmBits + linhaEmBits);
 
+			
 			String stringBin = intToBinaryString(acesso, endereco);
 
-			valorTag = stringBin.substring(0, tag);
-			valorLinha = stringBin.substring(tag, logLinha + tag);
+			if (stringBin == null) {
+				System.out.println("cu");
+			}
+			valorTag = stringBin.substring(0, tag.intValue());
+
+			valorLinha = stringBin.substring(tag.intValue(),  linhaEmBits.intValue() + tag.intValue());
 
 			// System.out.println(valorTag);
 			// System.out.println(valorLinha);
 
-			lCache = Integer.parseInt(valorLinha, 2);
+			lCache = Long.parseLong(valorLinha, 2);
 
-			if (posicoes[lCache] == null) {
-				posicoes[lCache] = valorTag;
-				missCache++;
-			} else if (posicoes[lCache].equals(valorTag)) {
+
+			if (posicoes[lCache.intValue()] != null &&  posicoes[lCache.intValue()].equals(valorTag)) {
 				hitCache++;
 			} else {
-				posicoes[lCache] = valorTag;
+				posicoes[lCache.intValue()] = valorTag;
 				missCache++;
 			}
 			count++;
@@ -122,16 +129,17 @@ public class Mapeamentos {
 	public void Associativo(MetodosSubstituicao opcao) {
 		int tag = (int) (Math.log(tamanhoMemoria / palavra) / Math.log(2)) - 2;
 
-		ValoresAssociativo[] posicoes = new ValoresAssociativo[nLinhas];
+		ValoresAssociativo[] posicoes = new ValoresAssociativo[(int) nLinhas];
 		String valorTag;
-		int i = 0, endereco = 0, valor = 0, id = 0;
+		int i = 0, valor = 0, id = 0;
+		long endereco = 0;
 		count = 0;
 		hitCache = 0;
 		missCache = 0;
 
-		ArrayList<String> teste = FileManager.stringReader("D:/SimuladorCacheOAC/SimuladorCache_AlexandreRodrigues/data/teste_1.txt");
+		ArrayList<String> teste = FileManager.stringReader("D:/CACHE_FINAL/CACHE_FINAL/data/teste_3D.txt");
 		for (String linha : teste) {
-			int acesso = Integer.parseInt(linha);
+			long acesso = Integer.parseInt(linha);
 
 			endereco = tag + 2;
 
@@ -163,23 +171,23 @@ public class Mapeamentos {
 	}
 
 	public void AssociativoConjunto(MetodosSubstituicao opcao) {
-		int endereco = 0;
+		long endereco = 0;
 		int i = 0, j = 0, nBloco = 0, blocos = 1, tag = 0, logBlocos = 0, valor = 0, id = 0;
 		count = 0;
 		missCache = 0;
 		hitCache = 0;
-		blocos = tamanhoCache / nLinhas;
+		blocos = (int) (tamanhoCache / nLinhas);
 		tag = (int) ((int) (Math.log(tamanhoMemoria / palavra) / Math.log(2)) + 1 - (Math.log(blocos) / Math.log(2))
 		- 2);
 		logBlocos = (int) (Math.log(blocos) / Math.log(2));
 
-		ValoresAssociativo[][] posicoes = new ValoresAssociativo[blocos][tamanhoCache];
+		ValoresAssociativo[][] posicoes = new ValoresAssociativo[blocos][(int) tamanhoCache];
 		String valorTag;
 		String valorBloco;
 
 		ArrayList<String> teste = FileManager.stringReader("D:/SimuladorCacheOAC/SimuladorCache_AlexandreRodrigues/data/teste_1.txt");
 		for (String linha : teste) {
-			int acesso = Integer.parseInt(linha);
+			long acesso = Integer.parseInt(linha);
 
 			endereco = tag + logBlocos + 2;
 			// int bin[] = intToBinary(acesso, endereco);
@@ -245,27 +253,27 @@ public class Mapeamentos {
 		return bin;
 	}
 
-	public static String intToBinaryString(int value, int size) {
+	public static String intToBinaryString(Long value, Long size) {
 		if (value > Math.pow(2, size) - 1) {
-			return null;
+				return null;
 		}
-		char bin[] = new char[size];
+		char bin[] = new char[size.intValue()];
 		for (int i = 0; i < size; i++) {
-			bin[i] = '0';
+				bin[i] = '0';
 		}
 		int i = 0;
 		while (value > 0 && i < size) {
-			int num = value % 2;
-			value = value / 2;
-			bin[i] = (num + "").charAt(0);
-			i++;
+				Long num = value % 2;
+				value = value / 2;
+				bin[i] = (num + "").charAt(0);
+				i++;
 		}
 		for (int j = 0; j <= size / 2; j++) {
-			char temp = bin[j];
-			bin[j] = bin[size - j - 1];
-			bin[size - j - 1] = temp;
+				char temp = bin[j];
+				bin[j] = bin[size.intValue() - j - 1];
+				bin[size.intValue() - j - 1] = temp;
 		}
 		String nova = new String(bin);
 		return nova;
-	}
+}
 }
